@@ -1,0 +1,401 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuatro en Raya</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #151923;
+            font-family: Arial, sans-serif;
+            color: white;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .subtitulo {
+            color: #aab2c5;
+            margin-bottom: 25px;
+        }
+
+        .estado {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .indicador {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background: #ff4545;
+        }
+
+        .tablero {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 9px;
+            background: #1763bd;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px #0007;
+            width: min(90vw, 490px);
+        }
+
+        .celda {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: #151923;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, transform 0.15s;
+        }
+
+        .celda:hover {
+            transform: scale(0.94);
+        }
+
+        .roja {
+            background: #ff4545;
+            box-shadow: inset 0 -4px 5px #0004;
+        }
+
+        .amarilla {
+            background: #ffd43b;
+            box-shadow: inset 0 -4px 5px #0004;
+        }
+
+        .ganadora {
+            outline: 4px solid white;
+            outline-offset: -5px;
+            animation: brillo 0.7s infinite alternate;
+        }
+
+        @keyframes brillo {
+            from { transform: scale(1); }
+            to { transform: scale(0.88); }
+        }
+
+        button {
+            margin-top: 25px;
+            padding: 13px 28px;
+            border: none;
+            border-radius: 9px;
+            background: #2679e8;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #4390f5;
+        }
+
+        .instrucciones {
+            margin-top: 20px;
+            color: #aab2c5;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        @media (max-width: 450px) {
+            h1 {
+                font-size: 27px;
+            }
+
+            .tablero {
+                gap: 5px;
+                padding: 9px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>CUATRO EN RAYA</h1>
+    <p class="subtitulo">Desafía a otro jugador</p>
+
+    <div class="estado" id="estado">
+        <span class="indicador" id="indicador"></span>
+        Turno del jugador rojo
+    </div>
+
+    <div class="tablero" id="tablero"></div>
+
+    <button onclick="reiniciarJuego()">Reiniciar partida</button>
+
+    <p class="instrucciones">
+        Conectá cuatro fichas para ganar.<br>
+        Horizontal, vertical o diagonal.
+    </p>
+
+    <script>
+
+        // CONFIGURACIÓN DEL JUEGO
+
+        const FILAS = 6;
+        const COLUMNAS = 7;
+
+        let tablero = [];
+        let jugadorActual = 1;
+        let juegoTerminado = false;
+
+        const elementoTablero = document.getElementById("tablero");
+        const elementoEstado = document.getElementById("estado");
+        const indicador = document.getElementById("indicador");
+
+
+        // INICIAR EL JUEGO
+
+        function iniciarJuego() {
+
+            tablero = [];
+
+            for (let fila = 0; fila < FILAS; fila++) {
+
+                tablero[fila] = [];
+
+                for (let columna = 0; columna < COLUMNAS; columna++) {
+                    tablero[fila][columna] = 0;
+                }
+            }
+
+            jugadorActual = 1;
+            juegoTerminado = false;
+
+            actualizarEstado();
+            dibujarTablero();
+        }
+
+
+        // DIBUJAR EL TABLERO
+
+        function dibujarTablero() {
+
+            elementoTablero.innerHTML = "";
+
+            for (let fila = 0; fila < FILAS; fila++) {
+
+                for (let columna = 0; columna < COLUMNAS; columna++) {
+
+                    const celda = document.createElement("div");
+
+                    celda.classList.add("celda");
+
+                    if (tablero[fila][columna] === 1) {
+                        celda.classList.add("roja");
+                    }
+
+                    if (tablero[fila][columna] === 2) {
+                        celda.classList.add("amarilla");
+                    }
+
+                    celda.addEventListener("click", function() {
+                        colocarFicha(columna);
+                    });
+
+                    elementoTablero.appendChild(celda);
+                }
+            }
+        }
+
+
+        // COLOCAR UNA FICHA
+
+        function colocarFicha(columna) {
+
+            if (juegoTerminado) return;
+
+            // Buscar la posición libre más baja
+
+            for (let fila = FILAS - 1; fila >= 0; fila--) {
+
+                if (tablero[fila][columna] === 0) {
+
+                    tablero[fila][columna] = jugadorActual;
+
+                    dibujarTablero();
+
+                    // Comprobar si hay ganador
+
+                    if (comprobarVictoria(fila, columna)) {
+
+                        juegoTerminado = true;
+
+                        elementoEstado.textContent =
+                            "¡Ganó el jugador " +
+                            (jugadorActual === 1 ? "rojo" : "amarillo") + "!";
+
+                        indicador.style.display = "none";
+
+                        return;
+                    }
+
+                    // Comprobar empate
+
+                    if (tablero[0].every(celda => celda !== 0)) {
+
+                        juegoTerminado = true;
+
+                        elementoEstado.textContent = "¡Empate!";
+
+                        indicador.style.display = "none";
+
+                        return;
+                    }
+
+                    // Cambiar de jugador
+
+                    jugadorActual = jugadorActual === 1 ? 2 : 1;
+
+                    actualizarEstado();
+
+                    return;
+                }
+            }
+        }
+
+
+        // ACTUALIZAR EL TURNO
+
+        function actualizarEstado() {
+
+            const color = jugadorActual === 1 ? "rojo" : "amarillo";
+
+            elementoEstado.innerHTML =
+                '<span class="indicador" id="indicador"></span>' +
+                "Turno del jugador " + color;
+
+            document.getElementById("indicador").style.background =
+                jugadorActual === 1 ? "#ff4545" : "#ffd43b";
+        }
+
+
+        // COMPROBAR SI HAY CUATRO EN RAYA
+
+        function comprobarVictoria(fila, columna) {
+
+            const jugador = jugadorActual;
+
+            const direcciones = [
+                [0, 1],  // Horizontal
+                [1, 0],  // Vertical
+                [1, 1],  // Diagonal \
+                [1, -1]  // Diagonal /
+            ];
+
+            for (const [df, dc] of direcciones) {
+
+                let cantidad = 1;
+
+                let posiciones = [[fila, columna]];
+
+                // Buscar hacia una dirección
+
+                for (let i = 1; i < 4; i++) {
+
+                    const f = fila + df * i;
+                    const c = columna + dc * i;
+
+                    if (
+                        f < 0 || f >= FILAS ||
+                        c < 0 || c >= COLUMNAS ||
+                        tablero[f][c] !== jugador
+                    ) {
+                        break;
+                    }
+
+                    cantidad++;
+                    posiciones.push([f, c]);
+                }
+
+                // Buscar hacia la dirección contraria
+
+                for (let i = 1; i < 4; i++) {
+
+                    const f = fila - df * i;
+                    const c = columna - dc * i;
+
+                    if (
+                        f < 0 || f >= FILAS ||
+                        c < 0 || c >= COLUMNAS ||
+                        tablero[f][c] !== jugador
+                    ) {
+                        break;
+                    }
+
+                    cantidad++;
+                    posiciones.push([f, c]);
+                }
+
+                // Si hay cuatro fichas consecutivas
+
+                if (cantidad >= 4) {
+
+                    marcarGanadoras(posiciones);
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
+        // MARCAR LAS FICHAS GANADORAS
+
+        function marcarGanadoras(posiciones) {
+
+            const celdas = elementoTablero.children;
+
+            posiciones.forEach(([fila, columna]) => {
+
+                const indice = fila * COLUMNAS + columna;
+
+                celdas[indice].classList.add("ganadora");
+
+            });
+        }
+
+
+        // REINICIAR EL JUEGO
+
+        function reiniciarJuego() {
+
+            indicador.style.display = "inline-block";
+
+            iniciarJuego();
+        }
+
+
+        // EJECUTAR AL ABRIR LA PÁGINA
+
+        iniciarJuego();
+
+    </script>
+
+</body>
+</html>
