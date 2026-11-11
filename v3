@@ -1,0 +1,599 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuatro en Raya</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: white;
+            background:
+                radial-gradient(circle at top, #263c59 0%, #111c2c 55%, #080e18 100%);
+        }
+
+        .contenedor {
+            text-align: center;
+            padding: 25px;
+            width: 100%;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 38px;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitulo {
+            color: #b8c7d9;
+            margin-bottom: 25px;
+            font-size: 15px;
+        }
+
+        #estado {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        #indicador {
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            background: #ff3b3b;
+            box-shadow: 0 0 12px currentColor;
+        }
+
+        /* TABLERO */
+
+        #tablero {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 9px;
+            width: min(90vw, 490px);
+            margin: 0 auto 25px;
+            padding: 15px;
+
+            background: linear-gradient(145deg, #1675d1, #06428c);
+            border: 3px solid #0b3670;
+            border-radius: 18px;
+
+            box-shadow:
+                0 12px 0 #052653,
+                0 18px 28px rgba(0, 0, 0, 0.55),
+                inset 0 4px 8px rgba(255, 255, 255, 0.22),
+                inset 0 -5px 10px rgba(0, 0, 0, 0.25);
+
+            transform: perspective(900px) rotateX(3deg);
+            transform-origin: center;
+        }
+
+        .celda {
+            position: relative;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+
+            background: linear-gradient(145deg, #073b7c, #0b2d60);
+            border-radius: 50%;
+
+            box-shadow:
+                inset 0 5px 9px rgba(0, 0, 0, 0.65),
+                inset 0 -2px 4px rgba(255, 255, 255, 0.08);
+
+            cursor: pointer;
+        }
+
+        /* FICHAS */
+
+        .ficha {
+            position: absolute;
+            width: 82%;
+            height: 82%;
+            border-radius: 50%;
+            transform: translateY(0);
+
+            box-shadow:
+                0 5px 0 rgba(0, 0, 0, 0.35),
+                0 8px 10px rgba(0, 0, 0, 0.35),
+                inset 0 4px 6px rgba(255, 255, 255, 0.4),
+                inset 0 -6px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        .roja {
+            background: radial-gradient(
+                circle at 32% 25%,
+                #ff9999 0%,
+                #ff4545 35%,
+                #d80000 75%,
+                #970000 100%
+            );
+        }
+
+        .amarilla {
+            background: radial-gradient(
+                circle at 32% 25%,
+                #fff5a0 0%,
+                #ffdf35 35%,
+                #e6a900 75%,
+                #a96b00 100%
+            );
+        }
+
+        /* CAÍDA, REBOTE Y PESO */
+
+        .ficha.caida {
+            animation: caer 0.85s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+        }
+
+        @keyframes caer {
+            0% {
+                transform: translateY(-480px) scale(0.85, 0.9);
+                filter: brightness(1.15);
+            }
+
+            58% {
+                transform: translateY(0) scale(1.08, 0.88);
+                filter: brightness(1.1);
+            }
+
+            70% {
+                transform: translateY(-24px) scale(0.96, 1.04);
+            }
+
+            82% {
+                transform: translateY(0) scale(1.04, 0.96);
+            }
+
+            91% {
+                transform: translateY(-7px) scale(0.99, 1.01);
+            }
+
+            100% {
+                transform: translateY(0) scale(1, 1);
+                filter: brightness(1);
+            }
+        }
+
+        /* EFECTO DE IMPACTO */
+
+        .celda.impacto::after {
+            content: "";
+            position: absolute;
+            width: 90%;
+            height: 90%;
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: ondaImpacto 0.4s ease-out forwards;
+        }
+
+        @keyframes ondaImpacto {
+            0% {
+                transform: scale(0.45);
+                opacity: 0.9;
+            }
+
+            100% {
+                transform: scale(1.35);
+                opacity: 0;
+            }
+        }
+
+        /* VIBRACIÓN DEL TABLERO */
+
+        #tablero.golpe {
+            animation: golpeTablero 0.22s ease-out;
+        }
+
+        @keyframes golpeTablero {
+            0% {
+                transform: perspective(900px) rotateX(3deg) translateY(0);
+            }
+
+            30% {
+                transform: perspective(900px) rotateX(3deg) translateY(3px);
+            }
+
+            60% {
+                transform: perspective(900px) rotateX(3deg) translateY(-2px);
+            }
+
+            100% {
+                transform: perspective(900px) rotateX(3deg) translateY(0);
+            }
+        }
+
+        /* FICHAS GANADORAS */
+
+        .ganadora {
+            animation: brilloGanador 0.7s infinite alternate;
+        }
+
+        @keyframes brilloGanador {
+            from {
+                filter: brightness(1);
+                box-shadow:
+                    0 5px 0 rgba(0, 0, 0, 0.35),
+                    0 8px 10px rgba(0, 0, 0, 0.35),
+                    inset 0 4px 6px rgba(255, 255, 255, 0.4);
+            }
+
+            to {
+                filter: brightness(1.5);
+                box-shadow:
+                    0 0 18px white,
+                    0 5px 0 rgba(0, 0, 0, 0.35);
+            }
+        }
+
+        /* BOTÓN */
+
+        button {
+            padding: 13px 28px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(145deg, #ffffff, #cbd5e1);
+            color: #17263b;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+
+            box-shadow:
+                0 5px 0 #8795a8,
+                0 8px 12px rgba(0, 0, 0, 0.3);
+
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 7px 0 #8795a8,
+                0 10px 15px rgba(0, 0, 0, 0.35);
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow:
+                0 1px 0 #8795a8,
+                0 3px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .instruccion {
+            margin-top: 20px;
+            color: #9eafc3;
+            font-size: 13px;
+        }
+
+        @media (max-width: 480px) {
+            .contenedor {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 30px;
+            }
+
+            #tablero {
+                gap: 6px;
+                padding: 10px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="contenedor">
+
+        <h1>CUATRO EN RAYA</h1>
+        <p class="subtitulo">El primero en conectar cuatro fichas gana</p>
+
+        <div id="estado">
+            <span id="indicador"></span>
+            <span id="textoEstado">Turno del jugador rojo</span>
+        </div>
+
+        <div id="tablero"></div>
+
+        <button onclick="reiniciarJuego()">Reiniciar partida</button>
+
+        <p class="instruccion">
+            Seleccioná una columna para colocar tu ficha.
+        </p>
+
+    </div>
+
+    <script>
+
+        const FILAS = 6;
+        const COLUMNAS = 7;
+
+        let tablero = [];
+        let jugadorActual = 1;
+        let juegoTerminado = false;
+        let ultimaFicha = null;
+
+        const elementoTablero = document.getElementById("tablero");
+        const textoEstado = document.getElementById("textoEstado");
+        const indicador = document.getElementById("indicador");
+
+        // INICIAR JUEGO
+
+        function iniciarJuego() {
+
+            tablero = [];
+
+            for (let fila = 0; fila < FILAS; fila++) {
+
+                tablero[fila] = [];
+
+                for (let columna = 0; columna < COLUMNAS; columna++) {
+                    tablero[fila][columna] = 0;
+                }
+            }
+
+            jugadorActual = 1;
+            juegoTerminado = false;
+            ultimaFicha = null;
+
+            dibujarTablero();
+            actualizarEstado();
+        }
+
+        // DIBUJAR TABLERO
+
+        function dibujarTablero() {
+
+            elementoTablero.innerHTML = "";
+
+            for (let fila = 0; fila < FILAS; fila++) {
+
+                for (let columna = 0; columna < COLUMNAS; columna++) {
+
+                    const celda = document.createElement("div");
+                    celda.classList.add("celda");
+
+                    const valor = tablero[fila][columna];
+
+                    if (valor !== 0) {
+
+                        const ficha = document.createElement("div");
+                        ficha.classList.add("ficha");
+
+                        if (valor === 1) {
+                            ficha.classList.add("roja");
+                        } else {
+                            ficha.classList.add("amarilla");
+                        }
+
+                        if (
+                            ultimaFicha &&
+                            ultimaFicha.fila === fila &&
+                            ultimaFicha.columna === columna
+                        ) {
+                            ficha.classList.add("caida");
+                            celda.classList.add("impacto");
+
+                            setTimeout(() => {
+                                elementoTablero.classList.remove("golpe");
+
+                                // Reinicia la animación de impacto
+                                void elementoTablero.offsetWidth;
+
+                                elementoTablero.classList.add("golpe");
+                            }, 590);
+                        }
+
+                        celda.appendChild(ficha);
+                    }
+
+                    celda.addEventListener("click", function () {
+                        colocarFicha(columna);
+                    });
+
+                    elementoTablero.appendChild(celda);
+                }
+            }
+        }
+
+        // COLOCAR FICHA
+
+        function colocarFicha(columna) {
+
+            if (juegoTerminado) {
+                return;
+            }
+
+            for (let fila = FILAS - 1; fila >= 0; fila--) {
+
+                if (tablero[fila][columna] === 0) {
+
+                    tablero[fila][columna] = jugadorActual;
+
+                    ultimaFicha = {
+                        fila: fila,
+                        columna: columna
+                    };
+
+                    dibujarTablero();
+
+                    if (comprobarVictoria(fila, columna)) {
+
+                        juegoTerminado = true;
+
+                        textoEstado.textContent =
+                            jugadorActual === 1
+                            ? "¡Ganó el jugador rojo!"
+                            : "¡Ganó el jugador amarillo!";
+
+                        return;
+                    }
+
+                    if (tableroLleno()) {
+
+                        juegoTerminado = true;
+                        textoEstado.textContent = "¡Empate!";
+
+                        return;
+                    }
+
+                    jugadorActual = jugadorActual === 1 ? 2 : 1;
+
+                    actualizarEstado();
+
+                    return;
+                }
+            }
+        }
+
+        // ACTUALIZAR TURNO
+
+        function actualizarEstado() {
+
+            if (jugadorActual === 1) {
+
+                textoEstado.textContent = "Turno del jugador rojo";
+                indicador.style.background = "#ff3b3b";
+                indicador.style.color = "#ff3b3b";
+
+            } else {
+
+                textoEstado.textContent = "Turno del jugador amarillo";
+                indicador.style.background = "#ffdf35";
+                indicador.style.color = "#ffdf35";
+            }
+        }
+
+        // COMPROBAR VICTORIA
+
+        function comprobarVictoria(fila, columna) {
+
+            const jugador = tablero[fila][columna];
+
+            const direcciones = [
+                [0, 1],   // Horizontal
+                [1, 0],   // Vertical
+                [1, 1],   // Diagonal
+                [1, -1]   // Diagonal inversa
+            ];
+
+            for (const [df, dc] of direcciones) {
+
+                let posiciones = [
+                    { fila: fila, columna: columna }
+                ];
+
+                contarFichas(df, dc);
+                contarFichas(-df, -dc);
+
+                function contarFichas(direccionFila, direccionColumna) {
+
+                    let f = fila + direccionFila;
+                    let c = columna + direccionColumna;
+
+                    while (
+                        f >= 0 &&
+                        f < FILAS &&
+                        c >= 0 &&
+                        c < COLUMNAS &&
+                        tablero[f][c] === jugador
+                    ) {
+
+                        posiciones.push({
+                            fila: f,
+                            columna: c
+                        });
+
+                        f += direccionFila;
+                        c += direccionColumna;
+                    }
+                }
+
+                if (posiciones.length >= 4) {
+
+                    marcarGanadoras(posiciones);
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // MARCAR FICHAS GANADORAS
+
+        function marcarGanadoras(posiciones) {
+
+            const celdas = elementoTablero.querySelectorAll(".celda");
+
+            posiciones.forEach(posicion => {
+
+                const indice =
+                    posicion.fila * COLUMNAS + posicion.columna;
+
+                const ficha = celdas[indice].querySelector(".ficha");
+
+                if (ficha) {
+                    ficha.classList.add("ganadora");
+                }
+            });
+        }
+
+        // COMPROBAR EMPATE
+
+        function tableroLleno() {
+
+            for (let fila = 0; fila < FILAS; fila++) {
+
+                for (let columna = 0; columna < COLUMNAS; columna++) {
+
+                    if (tablero[fila][columna] === 0) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        // REINICIAR JUEGO
+
+        function reiniciarJuego() {
+            iniciarJuego();
+        }
+
+        iniciarJuego();
+
+    </script>
+
+</body>
+</html>
