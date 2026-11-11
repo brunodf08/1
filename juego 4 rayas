@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuatro en Raya</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at top, #303d55 0%, #151923 65%);
+            font-family: Arial, sans-serif;
+            color: white;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+            text-shadow: 0 4px 8px #0009;
+        }
+
+        .subtitulo {
+            color: #aabbd2;
+            margin-bottom: 30px;
+        }
+
+        .estado {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            text-shadow: 0 3px 5px #0008;
+        }
+
+        .indicador {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background: #ff4545;
+        }
+
+        .tablero {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            width: min(90vw, 490px);
+            padding: 17px;
+            border-radius: 20px;
+
+            background: linear-gradient(
+                145deg,
+                #3489ed,
+                #1550a1 65%,
+                #0b326e
+            );
+
+            border: 2px solid #579df2;
+
+            box-shadow:
+                0 8px 0 #092c62,
+                0 15px 20px #0008,
+                inset 0 3px 5px #ffffff55,
+                inset 0 -5px 8px #001c50aa;
+
+            transform: perspective(900px) rotateX(5deg);
+            transform-style: preserve-3d;
+        }
+
+        .celda {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            cursor: pointer;
+
+            background: radial-gradient(
+                circle at 35% 30%,
+                #30394b,
+                #111722 65%,
+                #080c13
+            );
+
+            box-shadow:
+                inset 0 5px 8px #000b,
+                inset 0 -2px 4px #ffffff12,
+                0 2px 2px #ffffff18;
+
+            transition: transform 0.2s, filter 0.2s;
+        }
+
+        .celda:hover {
+            filter: brightness(1.25);
+            transform: translateZ(5px) scale(0.95);
+        }
+
+        .roja {
+            background: radial-gradient(
+                circle at 32% 25%,
+                #ffaaaa,
+                #ff4848 35%,
+                #d20d25 75%,
+                #79051b
+            );
+
+            box-shadow:
+                inset 0 5px 7px #ffffff88,
+                inset 0 -7px 9px #750018aa,
+                0 5px 0 #85091e,
+                0 8px 10px #0008;
+        }
+
+        .amarilla {
+            background: radial-gradient(
+                circle at 32% 25%,
+                #fff6a5,
+                #ffe34b 35%,
+                #e6a900 75%,
+                #996300
+            );
+
+            box-shadow:
+                inset 0 5px 7px #ffffffaa,
+                inset 0 -7px 9px #9b6500aa,
+                0 5px 0 #a16b00,
+                0 8px 10px #0008;
+        }
+
+        .ganadora {
+            outline: 4px solid white;
+            outline-offset: -5px;
+            animation: brillo 0.7s infinite alternate;
+        }
+
+        @keyframes brillo {
+            from {
+                filter: brightness(1);
+                transform: scale(1);
+            }
+
+            to {
+                filter: brightness(1.5);
+                transform: scale(0.88);
+            }
+        }
+
+        button {
+            margin-top: 30px;
+            padding: 14px 30px;
+            border: 1px solid #67aaff;
+            border-radius: 10px;
+
+            background: linear-gradient(
+                180deg,
+                #4398ff,
+                #1762c5
+            );
+
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+
+            box-shadow:
+                0 5px 0 #0b3979,
+                0 8px 12px #0006,
+                inset 0 2px 3px #ffffff55;
+
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        button:hover {
+            filter: brightness(1.15);
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow:
+                0 1px 0 #0b3979,
+                0 3px 5px #0006;
+        }
+
+        .instrucciones {
+            margin-top: 22px;
+            color: #aabbd2;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        @media (max-width: 450px) {
+            h1 {
+                font-size: 27px;
+            }
+
+            .tablero {
+                gap: 5px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>CUATRO EN RAYA</h1>
+
+    <p class="subtitulo">Desafía a otro jugador</p>
+
+    <div class="estado" id="estado">
+        <span class="indicador" id="indicador"></span>
+        Turno del jugador rojo
+    </div>
+
+    <div class="tablero" id="tablero"></div>
+
+    <button onclick="reiniciarJuego()">
+        Reiniciar partida
+    </button>
+
+    <p class="instrucciones">
+        Conectá cuatro fichas para ganar.<br>
+        Horizontal, vertical o diagonal.
+    </p>
+
+    <script>
+
+        // CONFIGURACIÓN DEL JUEGO
+
+        const FILAS = 6;
+        const COLUMNAS = 7;
+
+        let tablero = [];
+        let jugadorActual = 1;
+        let juegoTerminado = false;
+
+        const elementoTablero = document.getElementById("tablero");
+        const elementoEstado = document.getElementById("estado");
+
+
+        // INICIAR EL JUEGO
+
+        function iniciarJuego() {
+
+            tablero = [];
+
+            for (let fila = 0; fila < FILAS; fila++) {
+
+                tablero[fila] = [];
+
+                for (let columna = 0; columna < COLUMNAS; columna++) {
+                    tablero[fila][columna] = 0;
+                }
+            }
+
+            jugadorActual = 1;
+            juegoTerminado = false;
+
+            actualizarEstado();
+            dibujarTablero();
+        }
+
+
+        // DIBUJAR EL TABLERO
+
+        function dibujarTablero() {
+
+            elementoTablero.innerHTML = "";
+
+            for (let fila = 0; fila < FILAS; fila++) {
+
+                for (let columna = 0; columna < COLUMNAS; columna++) {
+
+                    const celda = document.createElement("div");
+
+                    celda.classList.add("celda");
+
+                    if (tablero[fila][columna] === 1) {
+                        celda.classList.add("roja");
+                    }
+
+                    if (tablero[fila][columna] === 2) {
+                        celda.classList.add("amarilla");
+                    }
+
+                    celda.addEventListener("click", function() {
+                        colocarFicha(columna);
+                    });
+
+                    elementoTablero.appendChild(celda);
+                }
+            }
+        }
+
+
+        // COLOCAR UNA FICHA
+
+        function colocarFicha(columna) {
+
+            if (juegoTerminado) return;
+
+            for (let fila = FILAS - 1; fila >= 0; fila--) {
+
+                if (tablero[fila][columna] === 0) {
+
+                    tablero[fila][columna] = jugadorActual;
+
+                    dibujarTablero();
+
+                    // COMPROBAR VICTORIA
+
+                    if (comprobarVictoria(fila, columna)) {
+
+                        juegoTerminado = true;
+
+                        elementoEstado.textContent =
+                            "¡Ganó el jugador " +
+                            (jugadorActual === 1 ? "rojo" : "amarillo") + "!";
+
+                        return;
+                    }
+
+                    // COMPROBAR EMPATE
+
+                    if (tablero[0].every(celda => celda !== 0)) {
+
+                        juegoTerminado = true;
+                        elementoEstado.textContent = "¡Empate!";
+
+                        return;
+                    }
+
+                    // CAMBIAR JUGADOR
+
+                    jugadorActual = jugadorActual === 1 ? 2 : 1;
+
+                    actualizarEstado();
+
+                    return;
+                }
+            }
+        }
+
+
+        // ACTUALIZAR TURNO
+
+        function actualizarEstado() {
+
+            const color = jugadorActual === 1 ? "rojo" : "amarillo";
+
+            const colorIndicador =
+                jugadorActual === 1 ? "#ff4545" : "#ffd43b";
+
+            elementoEstado.innerHTML =
+                '<span class="indicador" id="indicador"></span>' +
+                "Turno del jugador " + color;
+
+            document.getElementById("indicador").style.background =
+                colorIndicador;
+        }
+
+
+        // COMPROBAR VICTORIA
+
+        function comprobarVictoria(fila, columna) {
+
+            const jugador = jugadorActual;
+
+            const direcciones = [
+                [0, 1],
+                [1, 0],
+                [1, 1],
+                [1, -1]
+            ];
+
+            for (const [df, dc] of direcciones) {
+
+                let cantidad = 1;
+                let posiciones = [[fila, columna]];
+
+                // BUSCAR HACIA ADELANTE
+
+                for (let i = 1; i < 4; i++) {
+
+                    const f = fila + df * i;
+                    const c = columna + dc * i;
+
+                    if (
+                        f < 0 || f >= FILAS ||
+                        c < 0 || c >= COLUMNAS ||
+                        tablero[f][c] !== jugador
+                    ) {
+                        break;
+                    }
+
+                    cantidad++;
+                    posiciones.push([f, c]);
+                }
+
+                // BUSCAR HACIA ATRÁS
+
+                for (let i = 1; i < 4; i++) {
+
+                    const f = fila - df * i;
+                    const c = columna - dc * i;
+
+                    if (
+                        f < 0 || f >= FILAS ||
+                        c < 0 || c >= COLUMNAS ||
+                        tablero[f][c] !== jugador
+                    ) {
+                        break;
+                    }
+
+                    cantidad++;
+                    posiciones.push([f, c]);
+                }
+
+                // COMPROBAR CUATRO FICHAS
+
+                if (cantidad >= 4) {
+
+                    marcarGanadoras(posiciones);
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
+        // MARCAR FICHAS GANADORAS
+
+        function marcarGanadoras(posiciones) {
+
+            const celdas = elementoTablero.children;
+
+            posiciones.forEach(([fila, columna]) => {
+
+                const indice = fila * COLUMNAS + columna;
+
+                celdas[indice].classList.add("ganadora");
+
+            });
+        }
+
+
+        // REINICIAR PARTIDA
+
+        function reiniciarJuego() {
+
+            iniciarJuego();
+        }
+
+
+        // EJECUTAR EL JUEGO
+
+        iniciarJuego();
+
+    </script>
+
+</body>
+</html>
