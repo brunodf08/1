@@ -1,0 +1,684 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuatro en Raya</title>
+
+<style>
+*{box-sizing:border-box}
+:root{
+ --fondo:#f2f2f0;--texto:#242629;--secundario:#85878b;
+ --panel:rgba(255,255,255,.88);--borde:rgba(0,0,0,.08);
+ --tablero:#fafaf8;--agujero:#e1e2de;--soporte:#e8e9e5;
+ --boton:#fff;--sombra:rgba(0,0,0,.06);
+ --rojo:#e34848;--azul:#327bd1;
+}
+body[data-theme="dark"]{
+ --fondo:#17191d;--texto:#f0f1f3;--secundario:#a0a3aa;
+ --panel:rgba(37,40,46,.96);--borde:rgba(255,255,255,.1);
+ --tablero:#292d34;--agujero:#191c21;--soporte:#242830;
+ --boton:#30343b;--sombra:rgba(0,0,0,.25);
+}
+body{
+ margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ color:var(--texto);background:var(--fondo);overflow-x:hidden;
+ transition:background .25s,color .25s;
+}
+button{font-family:inherit;color:inherit}
+#ambiente{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.particula{
+ position:absolute;width:var(--size);height:var(--size);left:var(--x);top:var(--y);
+ border-radius:50%;opacity:var(--opacity);animation:flotar var(--duration) ease-in-out infinite alternate;
+ animation-delay:var(--delay);translate:var(--mx,0px) var(--my,0px);
+ transition:translate .45s ease-out;
+ box-shadow:inset 0 4px 7px rgba(255,255,255,.6),inset 0 -5px 8px rgba(0,0,0,.16),0 10px 22px rgba(0,0,0,.08);
+}
+.particula.roja{background:radial-gradient(circle at 30% 25%,#ffaaaa,#ed5252 48%,#c72d35)}
+.particula.azul{background:radial-gradient(circle at 30% 25%,#a6d2ff,#438bdc 48%,#205ba9)}
+@keyframes flotar{from{transform:translateY(-12px) rotate(-8deg)}to{transform:translateY(18px) rotate(8deg)}}
+.contenedor{
+ position:relative;z-index:1;width:100%;min-height:100vh;padding:30px 24px;
+ display:flex;flex-direction:column;align-items:center;
+}
+.encabezado{
+ width:min(100%,1050px);display:flex;justify-content:space-between;align-items:center;
+}
+.marca{font-size:12px;font-weight:650;letter-spacing:2px;color:var(--secundario)}
+.header-acciones{display:flex;align-items:center;gap:9px}
+.version{font-size:11px;color:var(--secundario);margin-right:8px}
+.icono-header{
+ width:38px;height:38px;border:1px solid var(--borde);border-radius:11px;
+ background:var(--panel);display:grid;place-items:center;cursor:pointer;
+ transition:transform .2s,background .2s;
+}
+.icono-header:hover{transform:translateY(-2px)}
+.icono-header svg{width:19px;height:19px;stroke:var(--texto);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#menu{width:min(100%,490px);margin:auto;padding:55px 0 45px;text-align:center}
+.titulo-menu{margin:0;font-size:clamp(38px,6vw,56px);font-weight:650;letter-spacing:-2.8px;line-height:1.1}
+.subtitulo{margin:13px 0 0;color:var(--secundario);font-size:15px}
+.composicion{position:relative;width:100%;height:185px;margin:18px auto 23px;display:flex;justify-content:center;align-items:center;perspective:700px}
+.grupo-fichas{position:relative;width:190px;height:130px}
+.ficha-decorativa{position:absolute;width:66px;height:66px;border-radius:50%;box-shadow:inset 0 5px 8px rgba(255,255,255,.6),inset 0 -7px 10px rgba(0,0,0,.2),0 13px 20px rgba(0,0,0,.12);animation:movimientoFicha 4s ease-in-out infinite alternate}
+.ficha-decorativa.roja{background:radial-gradient(circle at 30% 25%,#ffaaaa,#ed5252 50%,#c72d35)}
+.ficha-decorativa.azul{background:radial-gradient(circle at 30% 25%,#a6d2ff,#438bdc 50%,#205ba9)}
+.ficha-decorativa:nth-child(1){left:10px;top:43px;z-index:2;animation-delay:-.5s}
+.ficha-decorativa:nth-child(2){left:60px;top:5px;z-index:1;animation-delay:-1.5s}
+.ficha-decorativa:nth-child(3){left:63px;top:72px;z-index:3;animation-delay:-2s}
+.ficha-decorativa:nth-child(4){left:112px;top:38px;z-index:2;animation-delay:-1s}
+@keyframes movimientoFicha{from{transform:translateY(-7px) rotate(-8deg)}to{transform:translateY(9px) rotate(8deg)}}
+.opciones{display:flex;flex-direction:column;gap:11px;width:100%;text-align:left}
+.opcion{
+ display:flex;align-items:center;width:100%;min-height:78px;padding:15px 19px;
+ border:1px solid var(--borde);border-radius:15px;background:var(--panel);
+ text-align:left;cursor:pointer;transition:transform .25s,background .25s,box-shadow .25s;
+ box-shadow:0 3px 12px var(--sombra);backdrop-filter:blur(12px);
+}
+.opcion:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 10px 25px var(--sombra)}
+.opcion:active:not(:disabled){transform:scale(.985)}
+.opcion:disabled{opacity:.55;cursor:default}
+.icono-opcion{flex:0 0 43px;width:43px;height:43px;margin-right:16px;display:grid;place-items:center;border-radius:13px;background:rgba(130,130,130,.12)}
+.icono-opcion svg{width:22px;height:22px;stroke:var(--texto);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.contenido-opcion{flex:1;min-width:0}
+.opcion-titulo{display:block;font-size:15px;font-weight:620;margin-bottom:5px}
+.opcion-descripcion{display:block;font-size:12px;color:var(--secundario)}
+.flecha{color:var(--secundario);font-size:22px;margin-left:12px}
+.etiqueta{font-size:9px;font-weight:650;letter-spacing:.7px;color:var(--secundario);background:rgba(130,130,130,.13);padding:5px 8px;border-radius:6px}
+.pie-menu{margin-top:28px;color:var(--secundario);font-size:10px;font-weight:500;letter-spacing:1.5px}
+#pantallaJuego{display:none;width:100%;padding:55px 0 25px;text-align:center}
+#pantallaJuego.entrada{animation:entradaPantalla .42s ease both}
+#pantallaJuego.salida{animation:salidaPantalla .24s ease-in both}
+@keyframes entradaPantalla{from{opacity:0;transform:translateY(15px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes salidaPantalla{to{opacity:0;transform:translateY(8px) scale(.99)}}
+#infoModo{margin:0 0 18px;color:var(--secundario);font-size:11px;font-weight:600;letter-spacing:1.4px}
+#estado{display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:22px;font-size:17px;font-weight:600}
+#estado.cambio-turno{animation:cambioTurno .32s ease-out}
+#estado.resultado{animation:entradaResultado .5s ease both}
+@keyframes cambioTurno{from{opacity:.45;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes entradaResultado{0%{opacity:0;transform:translateY(12px) scale(.94)}65%{transform:translateY(-2px) scale(1.025)}100%{opacity:1;transform:none}}
+#indicador{width:13px;height:13px;flex-shrink:0;border-radius:50%;background:var(--rojo);box-shadow:0 0 10px currentColor;transition:background .35s,transform .35s}
+#estado.cambio-turno #indicador{animation:pulsoIndicador .35s}
+@keyframes pulsoIndicador{0%{transform:scale(.65)}65%{transform:scale(1.35)}100%{transform:scale(1)}}
+.puntos-pensando{display:inline-flex;margin-left:2px}
+.puntos-pensando span{animation:puntosPensando .9s infinite}
+.puntos-pensando span:nth-child(2){animation-delay:.15s}
+.puntos-pensando span:nth-child(3){animation-delay:.3s}
+@keyframes puntosPensando{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+#zonaJuego{position:relative;width:min(90vw,490px);margin:0 auto 25px}
+#zonaJuego.entrada-tablero{animation:entradaTablero .45s ease both}
+@keyframes entradaTablero{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+#selector{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;padding:0 15px;margin-bottom:12px}
+.selector-columna{height:48px;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer}
+.selector-columna.activa{background:rgba(130,130,130,.12)}
+.ficha-preview{width:75%;aspect-ratio:1;border-radius:50%;opacity:0;transform:translateY(-8px) scale(.8);transition:opacity .15s,transform .15s}
+.ficha-preview.visible{opacity:1;transform:none}
+#tablero{position:relative;z-index:2;display:grid;grid-template-columns:repeat(7,1fr);gap:9px;width:100%;padding:14px;background:var(--tablero);border:1px solid var(--borde);border-radius:17px;box-shadow:0 5px 12px var(--sombra)}
+.celda{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--agujero);border-radius:50%;box-shadow:inset 0 2px 4px rgba(0,0,0,.12),inset 0 -1px 2px rgba(255,255,255,.25);cursor:pointer}
+.ficha{position:absolute;z-index:5;width:84%;height:84%;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.13),inset 0 1px 1px rgba(255,255,255,.25);transition:opacity .35s,filter .35s}
+#soporte{position:relative;z-index:1;width:100%;height:43px;margin-top:-1px}
+#soporte::before{content:"";position:absolute;top:0;left:34%;width:32%;height:27px;background:var(--soporte);border-left:1px solid var(--borde);border-right:1px solid var(--borde)}
+#soporte::after{content:"";position:absolute;bottom:3px;left:6%;width:88%;height:17px;border:1px solid var(--borde);border-radius:7px;background:var(--soporte);box-shadow:0 4px 7px var(--sombra)}
+.ficha.caida{animation:caer .85s cubic-bezier(.25,.8,.25,1) both}
+@keyframes caer{0%{transform:translateY(-480px) scale(.85,.9)}58%{transform:translateY(0) scale(1.08,.88)}70%{transform:translateY(-24px) scale(.96,1.04)}82%{transform:translateY(0) scale(1.04,.96)}91%{transform:translateY(-7px) scale(.99,1.01)}100%{transform:none}}
+.celda.impacto::after{content:"";position:absolute;z-index:6;width:90%;height:90%;border:2px solid rgba(255,255,255,.9);border-radius:50%;pointer-events:none;animation:ondaImpacto .4s ease-out forwards}
+@keyframes ondaImpacto{0%{transform:scale(.45);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+#tablero.golpe{animation:golpeTablero .22s ease-out}
+@keyframes golpeTablero{0%,100%{transform:translateY(0)}30%{transform:translateY(2px)}60%{transform:translateY(-1px)}}
+.ficha.ganadora{z-index:7;animation:brilloGanador .95s ease-in-out infinite alternate}
+.ficha.no-ganadora{opacity:.28;filter:saturate(.55)}
+@keyframes brilloGanador{from{filter:brightness(1);box-shadow:0 1px 3px rgba(0,0,0,.13)}to{filter:brightness(1.3);box-shadow:0 0 0 4px rgba(255,255,255,.65),0 0 18px rgba(255,255,255,.75)}}
+.boton{padding:12px 20px;margin:5px;border:1px solid var(--borde);border-radius:9px;background:var(--boton);font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,transform .2s}
+.boton:hover{transform:translateY(-2px)}
+.boton:active{transform:scale(.97)}
+.instruccion{margin-top:18px;color:var(--secundario);font-size:12px}
+
+/* VENTANAS DE AJUSTES Y ESTADÍSTICAS */
+.capa-modal{
+ display:none;position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.42);
+ backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:18px;
+}
+.capa-modal.visible{display:flex;animation:aparecer .2s ease}
+@keyframes aparecer{from{opacity:0}to{opacity:1}}
+.modal{
+ width:min(100%,470px);max-height:85vh;overflow-y:auto;padding:25px;
+ background:var(--panel);border:1px solid var(--borde);border-radius:19px;
+ box-shadow:0 20px 70px rgba(0,0,0,.2);text-align:left;
+}
+.modal-cabecera{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.modal-titulo{font-size:21px;font-weight:650;letter-spacing:-.5px;margin:0}
+.cerrar-modal{border:0;background:transparent;color:var(--secundario);font-size:25px;cursor:pointer;padding:0 5px}
+.seccion-ajuste{padding:17px 0;border-top:1px solid var(--borde)}
+.seccion-titulo{font-size:12px;font-weight:700;letter-spacing:1px;color:var(--secundario);margin:0 0 14px;text-transform:uppercase}
+.fila-ajuste{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:12px 0;font-size:14px}
+.fila-ajuste small{display:block;color:var(--secundario);font-size:11px;margin-top:4px}
+.selector-color{display:flex;align-items:center;gap:8px}
+.selector-color input[type=color]{width:38px;height:34px;border:1px solid var(--borde);border-radius:8px;background:transparent;padding:2px;cursor:pointer}
+.hex-input{width:92px;padding:8px;border:1px solid var(--borde);border-radius:8px;background:var(--boton);color:var(--texto);font:12px monospace;text-transform:uppercase}
+.switch{width:42px;height:24px;position:relative;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:#999;border-radius:20px;cursor:pointer;transition:.2s}
+.switch span:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}
+.switch input:checked+span{background:#438bdc}
+.switch input:checked+span:before{transform:translateX(18px)}
+.opciones-tema{display:flex;gap:9px}
+.tema-opcion{flex:1;padding:11px;border:1px solid var(--borde);border-radius:9px;background:var(--boton);cursor:pointer;font-size:13px}
+.tema-opcion.activo{border-color:var(--azul);box-shadow:inset 0 0 0 1px var(--azul)}
+.boton-secundario{border:1px solid var(--borde);background:var(--boton);border-radius:8px;padding:9px 12px;font-size:12px;cursor:pointer}
+.ayuda{color:var(--secundario);font-size:11px;line-height:1.5;margin:10px 0 0}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat-card{padding:15px;border:1px solid var(--borde);border-radius:12px;background:rgba(130,130,130,.07)}
+.stat-numero{font-size:25px;font-weight:700;letter-spacing:-1px}
+.stat-label{font-size:11px;color:var(--secundario);margin-top:4px}
+.stats-subtitulo{font-size:13px;font-weight:650;margin:18px 0 10px}
+.modal-acciones{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.boton-peligro{background:#b83b3b;color:white;border:0;border-radius:8px;padding:10px 13px;font-size:12px;cursor:pointer}
+.confirmacion{display:none;margin-top:15px;padding:13px;border:1px solid var(--borde);border-radius:10px;background:rgba(130,130,130,.08)}
+.confirmacion.visible{display:block}
+.confirmacion p{font-size:13px;margin:0 0 12px}
+.confirmacion .modal-acciones{margin-top:0}
+@media(max-width:480px){
+ .contenedor{padding:22px 17px}#menu{padding-top:65px}
+ .titulo-menu{font-size:40px;letter-spacing:-2px}
+ .composicion{height:160px}#zonaJuego{width:94vw}
+ #selector{gap:6px;padding:0 10px}
+ #tablero{gap:6px;padding:10px;border-radius:13px}
+ .selector-columna{height:40px}.opcion{min-height:75px;padding:13px}
+ #soporte{height:38px}.modal{padding:20px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+
+<body>
+<div id="ambiente" aria-hidden="true"></div>
+<div class="contenedor">
+
+<header class="encabezado">
+ <span class="marca">CUATRO EN RAYA</span>
+ <div class="header-acciones">
+  <span class="version">01 / GAME</span>
+  <button class="icono-header" onclick="abrirModal('estadisticas')" aria-label="Estadísticas" title="Estadísticas">
+   <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h17"/><path d="M8 15l4-4 3 2 5-7"/></svg>
+  </button>
+  <button class="icono-header" onclick="abrirModal('ajustes')" aria-label="Ajustes" title="Ajustes">
+   <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 1.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2.4v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1L8 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H6.7v-2.4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L8 8.6l1.7-1.7.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h2.4v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.7 1.7-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg>
+  </button>
+ </div>
+</header>
+
+<div id="menu">
+ <h1 class="titulo-menu">Cuatro en Raya.</h1>
+ <p class="subtitulo">Una partida. Cuatro fichas. Una victoria.</p>
+ <div class="composicion" aria-hidden="true">
+  <div class="grupo-fichas">
+   <div class="ficha-decorativa roja"></div><div class="ficha-decorativa azul"></div>
+   <div class="ficha-decorativa roja"></div><div class="ficha-decorativa azul"></div>
+  </div>
+ </div>
+ <div class="opciones">
+  <button class="opcion" onclick="iniciarModo('cpu')">
+   <span class="icono-opcion"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8 12h8M12 8v8"/></svg></span>
+   <span class="contenido-opcion"><span class="opcion-titulo">Jugar contra CPU</span><span class="opcion-descripcion">Poné a prueba tu estrategia.</span></span><span class="flecha">›</span>
+  </button>
+  <button class="opcion" onclick="iniciarModo('local')">
+   <span class="icono-opcion"><svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="4"/><circle cx="17" cy="10" r="3"/><path d="M2.5 20c.4-3.5 2.6-5.2 6.5-5.2s6.1 1.7 6.5 5.2M15 15c3.4-.5 5.5 1.1 6 4"/></svg></span>
+   <span class="contenido-opcion"><span class="opcion-titulo">Jugar local</span><span class="opcion-descripcion">Compartí la partida.</span></span><span class="flecha">›</span>
+  </button>
+  <button class="opcion" disabled>
+   <span class="icono-opcion"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z"/></svg></span>
+   <span class="contenido-opcion"><span class="opcion-titulo">Online</span><span class="opcion-descripcion">Desafiá a otros jugadores.</span></span><span class="etiqueta">PRÓXIMAMENTE</span>
+  </button>
+ </div>
+ <div class="pie-menu">DISEÑADO PARA DISFRUTAR CADA PARTIDA</div>
+</div>
+
+<div id="pantallaJuego">
+ <p id="infoModo"></p>
+ <div id="estado"><span id="indicador"></span><span id="textoEstado">Turno del jugador 1</span></div>
+ <div id="zonaJuego">
+  <div id="selector"></div><div id="tablero"></div><div id="soporte"></div>
+ </div>
+ <button class="boton" onclick="reiniciarJuego()">Reiniciar partida</button>
+ <button class="boton" onclick="volverMenu()">Cambiar modo</button>
+ <p class="instruccion">Mové el mouse para elegir una columna y hacé clic para soltar la ficha.</p>
+</div>
+</div>
+
+<!-- AJUSTES -->
+<div class="capa-modal" id="modalAjustes" onclick="cerrarAlFondo(event,'ajustes')">
+ <div class="modal">
+  <div class="modal-cabecera"><h2 class="modal-titulo">Ajustes</h2><button class="cerrar-modal" onclick="cerrarModal('ajustes')">×</button></div>
+
+  <section class="seccion-ajuste">
+   <h3 class="seccion-titulo">Colores de las fichas</h3>
+   <div class="fila-ajuste">
+    <div>Jugador 1<small>Elegí el color de sus fichas.</small></div>
+    <div class="selector-color"><input type="color" id="color1"><input class="hex-input" id="hex1" maxlength="7"></div>
+   </div>
+   <div class="fila-ajuste">
+    <div>Jugador 2<small>Debe ser diferente al del jugador 1.</small></div>
+    <div class="selector-color"><input type="color" id="color2"><input class="hex-input" id="hex2" maxlength="7"></div>
+   </div>
+   <p class="ayuda" id="mensajeColores">Los cambios se aplican inmediatamente.</p>
+   <button class="boton-secundario" onclick="restaurarColores()">Restaurar colores originales</button>
+  </section>
+
+  <section class="seccion-ajuste">
+   <h3 class="seccion-titulo">Sonidos</h3>
+   <div class="fila-ajuste"><span>Caída de ficha</span><label class="switch"><input type="checkbox" id="sonidoCaida"><span></span></label></div>
+   <div class="fila-ajuste"><span>Victoria</span><label class="switch"><input type="checkbox" id="sonidoVictoria"><span></span></label></div>
+   <div class="fila-ajuste"><span>Empate</span><label class="switch"><input type="checkbox" id="sonidoEmpate"><span></span></label></div>
+   <div class="fila-ajuste"><span>Botones</span><label class="switch"><input type="checkbox" id="sonidoBotones"><span></span></label></div>
+   <p class="ayuda">Los sonidos se generan en el navegador. No necesitan archivos externos.</p>
+  </section>
+
+  <section class="seccion-ajuste">
+   <h3 class="seccion-titulo">Apariencia</h3>
+   <div class="opciones-tema">
+    <button class="tema-opcion" id="temaClaro" onclick="cambiarTema('light')">☀ Claro</button>
+    <button class="tema-opcion" id="temaOscuro" onclick="cambiarTema('dark')">☾ Oscuro</button>
+   </div>
+  </section>
+ </div>
+</div>
+
+<!-- ESTADÍSTICAS -->
+<div class="capa-modal" id="modalEstadisticas" onclick="cerrarAlFondo(event,'estadisticas')">
+ <div class="modal">
+  <div class="modal-cabecera"><h2 class="modal-titulo">Estadísticas</h2><button class="cerrar-modal" onclick="cerrarModal('estadisticas')">×</button></div>
+  <h3 class="stats-subtitulo">Contra la computadora</h3>
+  <div class="stats-grid">
+   <div class="stat-card"><div class="stat-numero" id="cpuGanadas">0</div><div class="stat-label">Victorias</div></div>
+   <div class="stat-card"><div class="stat-numero" id="cpuPerdidas">0</div><div class="stat-label">Derrotas</div></div>
+   <div class="stat-card"><div class="stat-numero" id="cpuEmpates">0</div><div class="stat-label">Empates</div></div>
+   <div class="stat-card"><div class="stat-numero" id="cpuTotal">0</div><div class="stat-label">Partidas jugadas</div></div>
+   <div class="stat-card"><div class="stat-numero" id="rachaActual">0</div><div class="stat-label">Racha actual de victorias</div></div>
+   <div class="stat-card"><div class="stat-numero" id="rachaMaxima">0</div><div class="stat-label">Mejor racha</div></div>
+  </div>
+  <h3 class="stats-subtitulo">Dos jugadores local</h3>
+  <div class="stats-grid">
+   <div class="stat-card"><div class="stat-numero" id="localP1">0</div><div class="stat-label">Victorias jugador 1</div></div>
+   <div class="stat-card"><div class="stat-numero" id="localP2">0</div><div class="stat-label">Victorias jugador 2</div></div>
+   <div class="stat-card"><div class="stat-numero" id="localEmpates">0</div><div class="stat-label">Empates</div></div>
+   <div class="stat-card"><div class="stat-numero" id="localTotal">0</div><div class="stat-label">Partidas jugadas</div></div>
+  </div>
+  <div class="confirmacion" id="confirmacionReset">
+   <p>¿Seguro que querés borrar todas las estadísticas? Esta acción no se puede deshacer.</p>
+   <div class="modal-acciones"><button class="boton-secundario" onclick="cancelarReset()">Cancelar</button><button class="boton-peligro" onclick="confirmarReset()">Borrar estadísticas</button></div>
+  </div>
+  <div class="modal-acciones"><button class="boton-peligro" onclick="pedirReset()">Reiniciar estadísticas</button></div>
+ </div>
+</div>
+
+<script>
+/* PREFERENCIAS Y DATOS GUARDADOS */
+const DEFAULTS={
+ color1:"#e34848",color2:"#327bd1",theme:"light",
+ sounds:{caida:true,victoria:true,empate:true,botones:true}
+};
+function leerGuardado(clave,defecto){
+ try{const dato=localStorage.getItem(clave);return dato?JSON.parse(dato):defecto}
+ catch(e){return defecto}
+}
+let preferencias=leerGuardado("cuatroRayaPreferencias",DEFAULTS);
+preferencias={...DEFAULTS,...preferencias,sounds:{...DEFAULTS.sounds,...(preferencias.sounds||{})}};
+let estadisticas=leerGuardado("cuatroRayaEstadisticas",{
+ cpu:{ganadas:0,perdidas:0,empates:0,racha:0,mejorRacha:0},
+ local:{p1:0,p2:0,empates:0}
+});
+function guardarPreferencias(){localStorage.setItem("cuatroRayaPreferencias",JSON.stringify(preferencias))}
+function guardarEstadisticas(){localStorage.setItem("cuatroRayaEstadisticas",JSON.stringify(estadisticas))}
+function aplicarPreferencias(){
+ document.body.dataset.theme=preferencias.theme;
+ document.documentElement.style.setProperty("--rojo",preferencias.color1);
+ document.documentElement.style.setProperty("--azul",preferencias.color2);
+ document.querySelectorAll(".ficha.roja,.ficha-preview.roja").forEach(x=>x.style.background=preferencias.color1);
+ document.querySelectorAll(".ficha.azul,.ficha-preview.azul").forEach(x=>x.style.background=preferencias.color2);
+ document.getElementById("temaClaro").classList.toggle("activo",preferencias.theme==="light");
+ document.getElementById("temaOscuro").classList.toggle("activo",preferencias.theme==="dark");
+}
+function cargarControles(){
+ document.getElementById("color1").value=preferencias.color1;
+ document.getElementById("color2").value=preferencias.color2;
+ document.getElementById("hex1").value=preferencias.color1;
+ document.getElementById("hex2").value=preferencias.color2;
+ for(const tipo of ["caida","victoria","empate","botones"])
+  document.getElementById("sonido"+tipo[0].toUpperCase()+tipo.slice(1)).checked=preferencias.sounds[tipo];
+}
+function actualizarColor(jugador,valor){
+ if(!/^#[0-9a-fA-F]{6}$/.test(valor))return;
+ const otro=jugador===1?preferencias.color2:preferencias.color1;
+ if(valor.toLowerCase()===otro.toLowerCase()){
+  document.getElementById("mensajeColores").textContent="Los dos jugadores no pueden tener el mismo color.";
+  cargarControles();return;
+ }
+ preferencias["color"+jugador]=valor;
+ guardarPreferencias();aplicarPreferencias();
+ document.getElementById("color"+jugador).value=valor;
+ document.getElementById("hex"+jugador).value=valor;
+ document.getElementById("mensajeColores").textContent="Color actualizado correctamente.";
+ if(tablero.length)dibujarTablero();
+}
+function restaurarColores(){
+ preferencias.color1=DEFAULTS.color1;preferencias.color2=DEFAULTS.color2;
+ guardarPreferencias();cargarControles();aplicarPreferencias();
+ if(tablero.length)dibujarTablero();
+ document.getElementById("mensajeColores").textContent="Se restauraron los colores originales.";
+}
+function cambiarTema(tema){preferencias.theme=tema;guardarPreferencias();aplicarPreferencias()}
+for(const n of [1,2]){
+ document.getElementById("color"+n).addEventListener("input",e=>actualizarColor(n,e.target.value));
+ document.getElementById("hex"+n).addEventListener("change",e=>{
+  let v=e.target.value.trim();if(!v.startsWith("#"))v="#"+v;actualizarColor(n,v);
+ });
+}
+for(const tipo of ["caida","victoria","empate","botones"]){
+ const id="sonido"+tipo[0].toUpperCase()+tipo.slice(1);
+ document.getElementById(id).addEventListener("change",e=>{
+  preferencias.sounds[tipo]=e.target.checked;guardarPreferencias();
+ });
+}
+aplicarPreferencias();cargarControles();
+
+/* SONIDOS SINTETIZADOS */
+let contextoAudio=null;
+function tono(frecuencia,duracion,forma="sine",volumen=.07,retardo=0){
+ try{
+  contextoAudio=contextoAudio||new (window.AudioContext||window.webkitAudioContext)();
+  if(contextoAudio.state==="suspended")contextoAudio.resume();
+  const oscilador=contextoAudio.createOscillator(),ganancia=contextoAudio.createGain();
+  oscilador.type=forma;oscilador.frequency.value=frecuencia;
+  ganancia.gain.setValueAtTime(volumen,contextoAudio.currentTime+retardo);
+  ganancia.gain.exponentialRampToValueAtTime(.001,contextoAudio.currentTime+retardo+duracion);
+  oscilador.connect(ganancia);ganancia.connect(contextoAudio.destination);
+  oscilador.start(contextoAudio.currentTime+retardo);oscilador.stop(contextoAudio.currentTime+retardo+duracion);
+ }catch(e){}
+}
+function sonido(tipo){
+ if(!preferencias.sounds[tipo])return;
+ if(tipo==="caida")tono(180,.11,"triangle",.055);
+ if(tipo==="botones")tono(480,.055,"sine",.035);
+ if(tipo==="empate"){tono(330,.2,"sine",.06);tono(260,.28,"sine",.05, .2)}
+ if(tipo==="victoria"){tono(440,.18,"sine",.06);tono(554,.18,"sine",.06,.16);tono(659,.32,"sine",.06,.32)}
+}
+document.addEventListener("click",e=>{
+ const b=e.target.closest("button");
+ if(b&&!b.disabled&&!b.closest(".switch")&&!b.classList.contains("tema-opcion"))sonido("botones");
+});
+
+/* MODALES */
+function abrirModal(tipo){
+ if(tipo==="ajustes"){cargarControles();document.getElementById("modalAjustes").classList.add("visible")}
+ else{actualizarEstadisticas();document.getElementById("modalEstadisticas").classList.add("visible")}
+}
+function cerrarModal(tipo){document.getElementById(tipo==="ajustes"?"modalAjustes":"modalEstadisticas").classList.remove("visible")}
+function cerrarAlFondo(event,tipo){if(event.target===event.currentTarget)cerrarModal(tipo)}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){cerrarModal("ajustes");cerrarModal("estadisticas")}});
+
+/* ESTADÍSTICAS */
+function registrarPartida(resultado){
+ if(partidaRegistrada)return;
+ partidaRegistrada=true;
+ if(modoActual==="cpu"){
+  if(resultado===1){
+   estadisticas.cpu.ganadas++;estadisticas.cpu.racha++;
+   estadisticas.cpu.mejorRacha=Math.max(estadisticas.cpu.mejorRacha,estadisticas.cpu.racha);
+  }else if(resultado===2){estadisticas.cpu.perdidas++;estadisticas.cpu.racha=0}
+  else{estadisticas.cpu.empates++;estadisticas.cpu.racha=0}
+ }else{
+  if(resultado===1)estadisticas.local.p1++;
+  else if(resultado===2)estadisticas.local.p2++;
+  else estadisticas.local.empates++;
+ }
+ guardarEstadisticas();
+}
+function actualizarEstadisticas(){
+ const c=estadisticas.cpu,l=estadisticas.local;
+ poner("cpuGanadas",c.ganadas);poner("cpuPerdidas",c.perdidas);poner("cpuEmpates",c.empates);
+ poner("cpuTotal",c.ganadas+c.perdidas+c.empates);poner("rachaActual",c.racha);poner("rachaMaxima",c.mejorRacha);
+ poner("localP1",l.p1);poner("localP2",l.p2);poner("localEmpates",l.empates);
+ poner("localTotal",l.p1+l.p2+l.empates);
+}
+function poner(id,valor){document.getElementById(id).textContent=valor}
+function pedirReset(){document.getElementById("confirmacionReset").classList.add("visible")}
+function cancelarReset(){document.getElementById("confirmacionReset").classList.remove("visible")}
+function confirmarReset(){
+ estadisticas={cpu:{ganadas:0,perdidas:0,empates:0,racha:0,mejorRacha:0},local:{p1:0,p2:0,empates:0}};
+ guardarEstadisticas();actualizarEstadisticas();cancelarReset();
+}
+
+/* AMBIENTE */
+const ambiente=document.getElementById("ambiente");
+const posiciones=[[8,15,34,"azul"],[88,12,24,"roja"],[17,77,22,"roja"],[80,78,38,"azul"],[48,8,17,"roja"],[94,48,19,"azul"],[5,47,16,"roja"],[70,25,14,"azul"],[29,89,18,"azul"],[62,90,25,"roja"],[39,19,13,"azul"],[97,88,15,"roja"]];
+posiciones.forEach((d,i)=>{
+ const f=document.createElement("div");f.className="particula "+d[3];
+ f.style.setProperty("--x",d[0]+"%");f.style.setProperty("--y",d[1]+"%");
+ f.style.setProperty("--size",d[2]+"px");f.style.setProperty("--opacity",i%3===0?".75":".42");
+ f.style.setProperty("--duration",(3+i%4)+"s");f.style.setProperty("--delay",(-i*.55)+"s");
+ ambiente.appendChild(f);
+});
+document.addEventListener("pointermove",e=>{
+ if(window.matchMedia("(pointer: coarse)").matches)return;
+ document.querySelectorAll(".particula").forEach(f=>{
+  const r=f.getBoundingClientRect(),dx=r.left+r.width/2-e.clientX,dy=r.top+r.height/2-e.clientY,d=Math.hypot(dx,dy);
+  if(d<180&&d>0){const fuerza=(180-d)/180;f.style.setProperty("--mx",dx/d*fuerza*20+"px");f.style.setProperty("--my",dy/d*fuerza*20+"px")}
+  else{f.style.setProperty("--mx","0px");f.style.setProperty("--my","0px")}
+ });
+});
+
+/* LÓGICA DEL JUEGO */
+const FILAS=6,COLUMNAS=7;
+let tablero=[],jugadorActual=1,juegoTerminado=false,ultimaFicha=null,columnaSeleccionada=null;
+let modoActual=null,cpuPensando=false,temporizadorCPU=null,temporizadorSalida=null,partidaRegistrada=false;
+const elementoTablero=document.getElementById("tablero");
+const elementoSelector=document.getElementById("selector");
+const zonaJuego=document.getElementById("zonaJuego");
+const textoEstado=document.getElementById("textoEstado");
+const indicador=document.getElementById("indicador");
+const elementoEstado=document.getElementById("estado");
+const pantallaJuego=document.getElementById("pantallaJuego");
+
+function colorJugador(j){return j===1?preferencias.color1:preferencias.color2}
+function nombreJugador(j){return "jugador "+j}
+function iniciarModo(modo){
+ clearTimeout(temporizadorSalida);modoActual=modo;
+ document.getElementById("menu").style.display="none";pantallaJuego.style.display="block";
+ pantallaJuego.classList.remove("salida","entrada");void pantallaJuego.offsetWidth;pantallaJuego.classList.add("entrada");
+ document.getElementById("infoModo").textContent=modo==="cpu"?"JUGADOR VS COMPUTADORA":"DOS JUGADORES LOCAL";
+ iniciarJuego();
+}
+function volverMenu(){
+ clearTimeout(temporizadorCPU);cpuPensando=false;juegoTerminado=true;
+ pantallaJuego.classList.remove("entrada");pantallaJuego.classList.add("salida");
+ temporizadorSalida=setTimeout(()=>{
+  pantallaJuego.style.display="none";pantallaJuego.classList.remove("salida");
+  document.getElementById("menu").style.display="block";
+ },240);
+}
+function iniciarJuego(){
+ clearTimeout(temporizadorCPU);tablero=Array.from({length:FILAS},()=>Array(COLUMNAS).fill(0));
+ jugadorActual=1;juegoTerminado=false;ultimaFicha=null;columnaSeleccionada=null;cpuPensando=false;partidaRegistrada=false;
+ elementoEstado.classList.remove("resultado","cambio-turno");
+ zonaJuego.classList.remove("entrada-tablero");void zonaJuego.offsetWidth;zonaJuego.classList.add("entrada-tablero");
+ dibujarSelector();dibujarTablero();actualizarEstado();
+}
+function dibujarSelector(){
+ elementoSelector.innerHTML="";
+ for(let c=0;c<COLUMNAS;c++){
+  const espacio=document.createElement("div");espacio.className="selector-columna";espacio.dataset.col=c;
+  const ficha=document.createElement("div");ficha.className="ficha-preview";espacio.appendChild(ficha);elementoSelector.appendChild(espacio);
+ }
+}
+function mostrarFichaSuperior(columna){
+ if(juegoTerminado||cpuPensando||(modoActual==="cpu"&&jugadorActual===2)){ocultarFichaSuperior();return}
+ columnaSeleccionada=columna;
+ elementoSelector.querySelectorAll(".selector-columna").forEach((el,i)=>{
+  const ficha=el.querySelector(".ficha-preview");el.classList.remove("activa");ficha.classList.remove("visible");
+  ficha.style.background="transparent";
+  if(i===columna){el.classList.add("activa");ficha.classList.add("visible");ficha.style.background=colorJugador(jugadorActual)}
+ });
+}
+function ocultarFichaSuperior(){
+ columnaSeleccionada=null;
+ elementoSelector.querySelectorAll(".selector-columna").forEach(el=>{
+  el.classList.remove("activa");el.querySelector(".ficha-preview").classList.remove("visible");
+ });
+}
+function dibujarTablero(){
+ elementoTablero.innerHTML="";
+ for(let f=0;f<FILAS;f++)for(let c=0;c<COLUMNAS;c++){
+  const celda=document.createElement("div");celda.className="celda";celda.dataset.col=c;
+  const valor=tablero[f][c];
+  if(valor!==0){
+   const ficha=document.createElement("div");ficha.className="ficha";ficha.style.background=colorJugador(valor);
+   if(ultimaFicha&&ultimaFicha.fila===f&&ultimaFicha.columna===c){
+    ficha.classList.add("caida");
+    ficha.addEventListener("animationend",()=>{
+     celda.classList.add("impacto");elementoTablero.classList.remove("golpe");void elementoTablero.offsetWidth;elementoTablero.classList.add("golpe");
+    },{once:true});
+   }
+   celda.appendChild(ficha);
+  }
+  elementoTablero.appendChild(celda);
+ }
+}
+zonaJuego.addEventListener("pointermove",e=>{
+ const el=e.target.closest("[data-col]");if(el)mostrarFichaSuperior(Number(el.dataset.col));
+});
+zonaJuego.addEventListener("pointerleave",ocultarFichaSuperior);
+zonaJuego.addEventListener("click",e=>{
+ const el=e.target.closest("[data-col]");if(el)colocarFicha(Number(el.dataset.col));
+});
+function colocarFicha(columna,esCPU=false){
+ if(juegoTerminado||columna<0||columna>=COLUMNAS)return;
+ if(cpuPensando&&!esCPU)return;
+ if(modoActual==="cpu"&&jugadorActual===2&&!esCPU)return;
+ if(esCPU)cpuPensando=false;
+ for(let fila=FILAS-1;fila>=0;fila--){
+  if(tablero[fila][columna]===0){
+   tablero[fila][columna]=jugadorActual;ultimaFicha={fila,columna};sonido("caida");dibujarTablero();
+   if(comprobarVictoria(fila,columna)){
+    juegoTerminado=true;ocultarFichaSuperior();registrarPartida(jugadorActual);
+    mostrarResultado(modoActual==="cpu"&&jugadorActual===2?"¡La computadora ganó!":"¡Ganó el jugador "+jugadorActual+"!");
+    sonido("victoria");return;
+   }
+   if(tableroLleno()){
+    juegoTerminado=true;ocultarFichaSuperior();registrarPartida(0);mostrarResultado("¡Empate!");sonido("empate");return;
+   }
+   if(modoActual==="cpu"&&jugadorActual===1){
+    jugadorActual=2;cpuPensando=true;ocultarFichaSuperior();actualizarEstado();
+    temporizadorCPU=setTimeout(jugarCPU,550);return;
+   }
+   jugadorActual=jugadorActual===1?2:1;actualizarEstado();
+   if(modoActual==="local")mostrarFichaSuperior(columna);
+   return;
+  }
+ }
+}
+function mostrarResultado(mensaje){
+ textoEstado.textContent=mensaje;elementoEstado.classList.remove("cambio-turno");void elementoEstado.offsetWidth;elementoEstado.classList.add("resultado");
+ indicador.style.background=jugadorActual===0?"#85878b":colorJugador(jugadorActual);indicador.style.color=indicador.style.background;
+}
+function actualizarEstado(){
+ elementoEstado.classList.remove("resultado","cambio-turno");void elementoEstado.offsetWidth;elementoEstado.classList.add("cambio-turno");
+ if(modoActual==="cpu"&&cpuPensando){
+  textoEstado.innerHTML='La computadora está pensando<span class="puntos-pensando"><span>.</span><span>.</span><span>.</span></span>';
+  indicador.style.background=colorJugador(2);indicador.style.color=colorJugador(2);return;
+ }
+ textoEstado.textContent=modoActual==="cpu"&&jugadorActual===2?"Turno de la computadora":"Turno del jugador "+jugadorActual;
+ indicador.style.background=colorJugador(jugadorActual);indicador.style.color=colorJugador(jugadorActual);
+}
+function comprobarVictoria(fila,columna){
+ const jugador=tablero[fila][columna],direcciones=[[0,1],[1,0],[1,1],[1,-1]];
+ for(const [df,dc] of direcciones){
+  let posiciones=[{fila,columna}];
+  for(const sentido of [1,-1]){
+   let f=fila+df*sentido,c=columna+dc*sentido;
+   while(f>=0&&f<FILAS&&c>=0&&c<COLUMNAS&&tablero[f][c]===jugador){
+    posiciones.push({fila:f,columna:c});f+=df*sentido;c+=dc*sentido;
+   }
+  }
+  if(posiciones.length>=4){marcarGanadoras(posiciones);return true}
+ }
+ return false;
+}
+function marcarGanadoras(posiciones){
+ const celdas=elementoTablero.querySelectorAll(".celda");
+ celdas.forEach(c=>{const f=c.querySelector(".ficha");if(f)f.classList.add("no-ganadora")});
+ posiciones.forEach(p=>{
+  const f=celdas[p.fila*COLUMNAS+p.columna].querySelector(".ficha");
+  if(f){f.classList.remove("no-ganadora");f.classList.add("ganadora")}
+ });
+}
+function tableroLleno(){return tablero.every(f=>f.every(v=>v!==0))}
+
+/* CPU: MINIMAX CON PODA ALFA-BETA */
+function copiarTablero(t){return t.map(f=>[...f])}
+function columnasDisponibles(t){return Array.from({length:COLUMNAS},(_,i)=>i).filter(c=>t[0][c]===0)}
+function obtenerFilaLibre(t,c){for(let f=FILAS-1;f>=0;f--)if(t[f][c]===0)return f;return -1}
+function detectarGanador(t){
+ for(let f=0;f<FILAS;f++)for(let c=0;c<COLUMNAS;c++){
+  const j=t[f][c];if(!j)continue;
+  for(const [df,dc] of [[0,1],[1,0],[1,1],[1,-1]]){
+   let n=1;for(let i=1;i<4;i++){
+    const nf=f+df*i,nc=c+dc*i;
+    if(nf<0||nf>=FILAS||nc<0||nc>=COLUMNAS||t[nf][nc]!==j)break;n++;
+   }
+   if(n===4)return j;
+  }
+ }
+ return 0;
+}
+function evaluarLinea(linea){
+ let cpu=0,humano=0,vacias=0;
+ for(const v of linea){if(v===2)cpu++;else if(v===1)humano++;else vacias++}
+ let p=0;
+ if(cpu===4)p+=10000;else if(cpu===3&&vacias===1)p+=120;else if(cpu===2&&vacias===2)p+=15;
+ if(humano===3&&vacias===1)p-=150;else if(humano===2&&vacias===2)p-=12;
+ return p;
+}
+function evaluarTablero(t){
+ let p=0;for(let f=0;f<FILAS;f++){if(t[f][3]===2)p+=6;if(t[f][3]===1)p-=6}
+ for(let f=0;f<FILAS;f++)for(let c=0;c<COLUMNAS-3;c++)p+=evaluarLinea([t[f][c],t[f][c+1],t[f][c+2],t[f][c+3]]);
+ for(let f=0;f<FILAS-3;f++)for(let c=0;c<COLUMNAS;c++)p+=evaluarLinea([t[f][c],t[f+1][c],t[f+2][c],t[f+3][c]]);
+ for(let f=0;f<FILAS-3;f++)for(let c=0;c<COLUMNAS-3;c++)p+=evaluarLinea([t[f][c],t[f+1][c+1],t[f+2][c+2],t[f+3][c+3]]);
+ for(let f=3;f<FILAS;f++)for(let c=0;c<COLUMNAS-3;c++)p+=evaluarLinea([t[f][c],t[f-1][c+1],t[f-2][c+2],t[f-3][c+3]]);
+ return p;
+}
+function minimax(t,profundidad,alfa,beta,maximizando){
+ const ganador=detectarGanador(t),disponibles=columnasDisponibles(t);
+ if(ganador===2)return 100000+profundidad;if(ganador===1)return -100000-profundidad;
+ if(profundidad===0||!disponibles.length)return evaluarTablero(t);
+ const orden=[3,2,4,1,5,0,6];
+ if(maximizando){
+  let mejor=-Infinity;
+  for(const c of orden){if(!disponibles.includes(c))continue;const f=obtenerFilaLibre(t,c),copia=copiarTablero(t);copia[f][c]=2;
+   mejor=Math.max(mejor,minimax(copia,profundidad-1,alfa,beta,false));alfa=Math.max(alfa,mejor);if(beta<=alfa)break}
+  return mejor;
+ }else{
+  let mejor=Infinity;
+  for(const c of orden){if(!disponibles.includes(c))continue;const f=obtenerFilaLibre(t,c),copia=copiarTablero(t);copia[f][c]=1;
+   mejor=Math.min(mejor,minimax(copia,profundidad-1,alfa,beta,true));beta=Math.min(beta,mejor);if(beta<=alfa)break}
+  return mejor;
+ }
+}
+function mejorJugadaCPU(){
+ const disponibles=columnasDisponibles(tablero),orden=[3,2,4,1,5,0,6];
+ let mejorColumna=disponibles[0],mejorValor=-Infinity;
+ for(const c of orden){if(!disponibles.includes(c))continue;
+  const f=obtenerFilaLibre(tablero,c),copia=copiarTablero(tablero);copia[f][c]=2;
+  const valor=minimax(copia,6,-Infinity,Infinity,false);
+  if(valor>mejorValor){mejorValor=valor;mejorColumna=c}
+ }
+ return mejorColumna;
+}
+function jugarCPU(){if(juegoTerminado||modoActual!=="cpu")return;const c=mejorJugadaCPU();if(c!==undefined)colocarFicha(c,true)}
+function reiniciarJuego(){iniciarJuego()}
+
+/* INICIO */
+</script>
+</body>
+</html>
